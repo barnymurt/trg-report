@@ -122,6 +122,8 @@
         { id: 6, type: 'transaction', name: '14 transfers · €2,340,000', meta: null,      source: 'Gravity',   value: '€2,340,000 · RED', flag: 'RED' },
         { id: 7, type: 'device',      name: 'IMEI 4XXXXX8472',        meta: null,        source: 'Compass',   value: 'Last: 22 Mar 2026', flag: null },
         { id: 8, type: 'travel',      name: '12 cross-border movements', meta: null,       source: 'Discovery', value: 'Pattern: REGULAR', flag: null },
+        { id: 9, type: 'notes',       name: 'Informant Interview — Hamburg Field Office', meta: 'DIS-0047', source: 'Discovery', value: null, flag: null,
+          longText: 'Subject informant Alpha-7, operating under handler REF-2291, provided the following account during a debrief conducted at Hamburg Field Office on 14 February 2026. The informant stated that Marcus Van Der Berg was introduced to the network approximately 18 months prior, through a financial intermediary referred to only as "The Accountant." The informant described Van Der Berg as responsible for coordinating logistics for the movement of high-value cargo between Hamburg, Rotterdam, and a third jurisdiction consistent with the Tri-Cities corridor. The informant further stated that Van Der Berg maintained a secondary residence in the Hamburg Warehouse District under a shell identity, and that this location was used for storage of documentation related to financial transfers. This account is consistent with data obtained from Gravity financial feeds and Compass telco records. Informant reliability assessed at Level 3 — partial corroboration from independent sources. Further investigation recommended before direct operational use.' },
       ],
       dataSources: ['Compass', 'Gravity', 'Quadrant', 'Pulse', 'Discovery'],
     };
@@ -301,11 +303,13 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
       transaction: { label: 'Transaction',  abbr: 'TXN',  color: '#ef4444' },
       device:      { label: 'Device',       abbr: 'DEV',  color: null },
       travel:      { label: 'Travel',       abbr: 'TRV',  color: null },
+      notes:       { label: 'Notes',        abbr: 'NTS',  color: '#22c55e' },
     };
 
     function FindingRow({ finding, onSelect, isSelected }) {
       const config = TYPE_CONFIG[finding.type];
       const hasFlag = finding.flag === 'RED';
+      const isNotes = finding.type === 'notes';
 
       return (
         <div
@@ -317,9 +321,7 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <div className={`flex-shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase ${
-                config.color
-                  ? 'bg-danger/20 text-danger'
-                  : 'bg-white/10 text-textSecondary'
+                isNotes ? 'bg-success/20 text-success' : config.color ? 'bg-danger/20 text-danger' : 'bg-white/10 text-textSecondary'
               }`}>
                 {config.abbr}
               </div>
@@ -336,11 +338,15 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted mt-0.5">
-                  {finding.source}
-                  <span className="mx-1.5 text-white/20">·</span>
-                  {finding.value}
-                </p>
+                {isNotes ? (
+                  <p className="text-xs text-muted mt-0.5 italic">See full notes in report →</p>
+                ) : (
+                  <p className="text-xs text-muted mt-0.5">
+                    {finding.source}
+                    <span className="mx-1.5 text-white/20">·</span>
+                    {finding.value}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -542,22 +548,28 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
                 {INVESTIGATION.findings.map(finding => {
                   const config = TYPE_CONFIG[finding.type];
                   const hasFlag = finding.flag === 'RED';
+                  const isNotes = finding.type === 'notes';
                   return (
                     <tr
                       key={finding.id}
                       className={`border-b border-slate-100 last:border-0 ${hasFlag ? 'bg-red-50 border-l-2 border-l-danger' : ''}`}
                     >
                       <td className="py-2 pr-2 align-top">
-                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide whitespace-nowrap ${hasFlag ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide whitespace-nowrap ${
+                          hasFlag ? 'bg-red-100 text-red-700' : isNotes ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
+                        }`}>
                           {config.abbr}
                         </span>
                       </td>
                       <td className="py-2 pr-3 align-top">
                         <span className="text-slate-800 font-medium break-words">{finding.name}</span>
                         {finding.meta && <span className="ml-2 text-slate-400 text-xs whitespace-nowrap">{finding.meta}</span>}
+                        {isNotes && finding.longText && (
+                          <p className="mt-1.5 text-xs text-slate-600 leading-relaxed italic border-l-2 border-slate-300 pl-2">{finding.longText}</p>
+                        )}
                       </td>
                       <td className="py-2 pr-3 text-slate-500 text-xs align-top whitespace-nowrap">{finding.source}</td>
-                      <td className={`py-2 text-xs font-medium align-top whitespace-nowrap ${hasFlag ? 'text-red-600' : finding.value.includes('HIGH') ? 'text-green-600' : 'text-slate-600'}`}>
+                      <td className={`py-2 text-xs font-medium align-top whitespace-nowrap ${hasFlag ? 'text-red-600' : finding.value && finding.value.includes('HIGH') ? 'text-green-600' : 'text-slate-600'}`}>
                         {finding.value}
                       </td>
                     </tr>
@@ -1213,19 +1225,23 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
                         {INVESTIGATION.findings.map(finding => {
                           const config = TYPE_CONFIG[finding.type];
                           const hasFlag = finding.flag === 'RED';
+                          const isNotes = finding.type === 'notes';
                           return (
                             <tr key={finding.id} className={`border-b border-slate-100 last:border-0 ${hasFlag ? 'bg-red-50 border-l-2 border-l-danger' : ''}`}>
                               <td className="py-2 pr-2 align-top">
-                                <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide whitespace-nowrap ${hasFlag ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
+                                <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide whitespace-nowrap ${hasFlag ? 'bg-red-100 text-red-700' : isNotes ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
                                   {config.abbr}
                                 </span>
                               </td>
                               <td className="py-2 pr-3 align-top">
                                 <span className="text-slate-800 font-medium break-words">{finding.name}</span>
                                 {finding.meta && <span className="ml-2 text-slate-400 text-xs whitespace-nowrap">{finding.meta}</span>}
+                                {isNotes && finding.longText && (
+                                  <p className="mt-1.5 text-xs text-slate-600 leading-relaxed italic border-l-2 border-slate-300 pl-2">{finding.longText}</p>
+                                )}
                               </td>
                               <td className="py-2 pr-3 text-slate-500 text-xs align-top whitespace-nowrap">{finding.source}</td>
-                              <td className={`py-2 text-xs font-medium align-top whitespace-nowrap ${hasFlag ? 'text-red-600' : finding.value.includes('HIGH') ? 'text-green-600' : 'text-slate-600'}`}>
+                              <td className={`py-2 text-xs font-medium align-top whitespace-nowrap ${hasFlag ? 'text-red-600' : finding.value && finding.value.includes('HIGH') ? 'text-green-600' : 'text-slate-600'}`}>
                                 {finding.value}
                               </td>
                             </tr>

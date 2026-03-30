@@ -679,7 +679,6 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
 
     // ─── REPORT BUILDER MODAL ──────────────────────────────────────────────────
     function ReportBuilderModal({ isOpen, onClose, onExportSuccess }) {
-      const [workflowMode, setWorkflowMode] = useState('new');
       const [selectedTemplate, setSelectedTemplate] = useState('agency-standard');
       const [classification, setClassification] = useState('confidential');
       const [narrativeMode, setNarrativeMode] = useState('ai-assisted');
@@ -721,276 +720,125 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
               </button>
             </div>
 
-            {/* Workflow Toggle */}
-            <div className="px-6 py-4 border-b border-border flex-shrink-0">
-              <div className="flex gap-2 p-1 bg-surface rounded-xl w-fit">
-                {[
-                  { id: 'current', label: 'Current Way', desc: 'Export raw data → Manual formatting in Word' },
-                  { id: 'new', label: 'New Way', desc: 'One-click branded PDF from platform' },
-                ].map(mode => (
-                  <button
-                    key={mode.id}
-                    onClick={() => setWorkflowMode(mode.id)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                      workflowMode === mode.id
-                        ? mode.id === 'current'
-                          ? 'bg-danger/15 text-danger border border-danger/30'
-                          : 'bg-accent/15 text-accent border border-accent/30'
-                        : 'text-muted hover:text-white'
-                    }`}
-                  >
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      workflowMode === mode.id
-                        ? mode.id === 'current' ? 'bg-danger' : 'bg-accent'
-                        : 'bg-muted'
-                    }`} />
-                    <div className="text-left">
-                      <p>{mode.label}</p>
-                      <p className={`text-xs font-normal ${
-                        workflowMode === mode.id
-                          ? mode.id === 'current' ? 'text-danger/70' : 'text-accent/70'
-                          : 'text-muted/70'
-                      }`}>{mode.desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* Workflow Contrast Banner */}
-              {workflowMode === 'current' && (
-                <div className="mt-4 p-4 bg-danger/5 border border-danger/20 rounded-xl">
-                  <p className="text-sm font-medium text-danger">What analysts do today</p>
-                  <p className="text-xs text-muted mt-1">
-                    Export raw data from the platform → manually reassemble in Word with agency branding, formatting, and narrative. No platform record of what was shared.
-                  </p>
-                </div>
-              )}
-              {workflowMode === 'new' && (
-                <div className="mt-4 p-4 bg-accent/5 border border-accent/20 rounded-xl">
-                  <p className="text-sm font-medium text-accent">What analysts will do instead</p>
-                  <p className="text-xs text-muted mt-1">
-                    Select template, review auto-populated findings, add narrative — then download a branded, classified, audit-ready PDF in one click. All from inside the platform.
-                  </p>
-                </div>
-              )}
-            </div>
-
             {/* Scrollable Body */}
             <div className="flex-1 overflow-y-auto scrollbar-thin">
-              <div className="p-6">
+              <div className="p-6 space-y-6">
 
-                {/* CURRENT WAY: What analysts manually produce today */}
-                {workflowMode === 'current' && (
-                  <div>
-                    <p className="text-xs text-muted uppercase tracking-wider font-semibold mb-4">
-                      What analysts manually produce today — no platform record
-                    </p>
-                    <div className="transform scale-[0.75] origin-top-left w-[133%]">
-
-                      {/* Mock Word Document — manually assembled by analyst */}
-                      <div className="bg-white rounded-xl overflow-hidden shadow-2xl border border-gray-200">
-                        {/* Word doc title bar */}
-                        <div className="bg-gray-100 px-4 py-2 border-b border-gray-200 flex items-center gap-2">
-                          <div className="flex gap-1.5">
-                            <div className="w-3 h-3 rounded-full bg-red-400" />
-                            <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                            <div className="w-3 h-3 rounded-full bg-green-400" />
-                          </div>
-                          <span className="ml-2 text-xs text-gray-500 font-mono">CASE-2026-0342_Report_Draft_v3.docx</span>
-                        </div>
-
-                        {/* Word doc body */}
-                        <div className="p-8 text-black">
-                          {/* Header */}
-                          <div className="flex items-start justify-between mb-6 pb-4 border-b border-gray-300">
-                            <div>
-                              <p className="text-lg font-bold text-gray-900">Investigation Report</p>
-                              <p className="text-sm text-gray-600 mt-1">NCIB Case File</p>
-                            </div>
-                            <div className="text-right text-xs text-gray-500">
-                              <p>CONFIDENTIAL</p>
-                              <p className="mt-1">By: M. Reyes</p>
-                              <p>Date: 28/03/2026</p>
-                            </div>
-                          </div>
-
-                          {/* Manually pasted entity list — inconsistent styling */}
-                          <p className="text-sm font-bold text-gray-800 mb-2">Entities Identified:</p>
-                          <div className="mb-4 ml-2">
-                            <p className="text-sm text-gray-700">1. Marcus Van Der Berg (Compass data, confidence 94%)</p>
-                            <p className="text-sm text-gray-700 mt-1">2. Pacific Holdings LLC — shell company flagged in Gravity (87%)</p>
-                            <p className="text-sm text-gray-700 mt-1">3. Three Countries Network — org network, Quadrant data, 78%</p>
-                          </div>
-
-                          {/* Transaction data — different formatting, pasted from Excel */}
-                          <p className="text-sm font-bold text-gray-800 mb-2">Financial Data:</p>
-                          <div className="mb-4 ml-2 bg-gray-50 border border-gray-200 rounded p-2">
-                            <p className="text-xs text-gray-600 font-mono">14 transfers totalling approx €2.34M — see Gravity export attached (separate file)</p>
-                            <p className="text-xs text-red-600 mt-1 font-semibold">⚠ RED FLAGS — requires further investigation</p>
-                          </div>
-
-                          {/* Connection note — analyst annotation style */}
-                          <p className="text-sm font-bold text-gray-800 mb-2">Links:</p>
-                          <div className="mb-4 ml-2">
-                            <p className="text-sm text-gray-700">MVDB → Pacific Holdings LLC — HIGH strength connection</p>
-                            <p className="text-sm text-gray-700 mt-1">Hamburg Warehouse — linked location, see Discovery map screenshot below</p>
-                          </div>
-
-                          {/* Device — inconsistent with other rows */}
-                          <p className="text-sm text-gray-700 mb-1">Device: IMEI 4XXXXX8472 (Compass) — last seen 22 Mar 2026</p>
-                          <p className="text-sm text-gray-700 mb-4">Travel: 12 cross-border movements detected</p>
-
-                          {/* Narrative — handwritten feel */}
-                          <p className="text-sm font-bold text-gray-800 mb-2">Analysis Notes:</p>
-                          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
-                            <p className="text-sm text-gray-700 italic">
-                              "MVDB appears connected to shell company — financial flows through Hamburg warehouse entity. Network spans at least 3 countries. Recommend further investigation under 7-Alpha. See attached spreadsheets and map screenshots."
-                            </p>
-                            <p className="text-xs text-gray-500 mt-2">— Analyst M. Reyes, drafted in Word, 28 Mar 2026</p>
-                          </div>
-
-                          {/* Manual screenshots placeholder */}
-                          <div className="bg-gray-100 border border-gray-300 rounded h-20 flex items-center justify-center mb-4">
-                            <span className="text-xs text-gray-500">[Map screenshot pasted manually from Discovery]</span>
-                          </div>
-
-                          {/* Footer note — manually added */}
-                          <div className="border-t border-gray-300 pt-3 mt-4">
-                            <p className="text-xs text-gray-400">
-                              Sources: Compass, Gravity, Quadrant, Pulse, Discovery — raw data exported separately as CSV files
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1">
-                              ⚠ This document was manually assembled. No platform audit trail exists for what was shared.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                {/* Template Selector */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-white">Report Template</h3>
+                    <span className="text-xs text-muted">Required for export</span>
                   </div>
-                )}
-
-                {/* NEW WAY: Full ReportBuilder experience */}
-                {workflowMode === 'new' && (
-                  <div className="space-y-6">
-
-                    {/* Template Selector */}
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold text-white">Report Template</h3>
-                        <span className="text-xs text-muted">Required for export</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-3">
-                        {TEMPLATES.map(tpl => (
-                          <button
-                            key={tpl.id}
-                            disabled={tpl.status === 'locked'}
-                            onClick={() => tpl.status === 'active' && setSelectedTemplate(tpl.id)}
-                            className={`relative p-4 rounded-xl border text-left transition-all ${
-                              tpl.status === 'locked'
-                                ? 'opacity-50 cursor-not-allowed bg-surface border-border'
-                                : selectedTemplate === tpl.id
-                                  ? 'bg-accent/10 border-accent/50 ring-1 ring-accent/30'
-                                  : 'bg-surface border-border hover:border-white/20'
-                            }`}
-                          >
-                            {tpl.status === 'active' && selectedTemplate === tpl.id && (
-                              <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
-                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </div>
-                            )}
-                            {tpl.status === 'locked' && (
-                              <div className="absolute top-3 right-3">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/15 text-warning border border-warning/30 font-semibold">
-                                  {tpl.available}
-                                </span>
-                              </div>
-                            )}
-                            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-3">
-                              <svg className="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            </div>
-                            <p className="text-sm font-medium text-white mb-1">{tpl.label}</p>
-                            <p className="text-xs text-muted leading-relaxed">{tpl.desc}</p>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Classification */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-white mb-3">Classification Level</h3>
-                      <div className="flex gap-3">
-                        {CLASSIFICATIONS.map(cls => (
-                          <button
-                            key={cls.id}
-                            onClick={() => setClassification(cls.id)}
-                            className={`flex-1 p-3 rounded-xl border transition-all ${
-                              classification === cls.id
-                                ? 'border-current'
-                                : 'border-border hover:border-white/20'
-                            }`}
-                            style={{
-                              borderColor: classification === cls.id ? cls.color : undefined,
-                              backgroundColor: classification === cls.id ? `${cls.color}15` : undefined,
-                            }}
-                          >
-                            <div className="flex items-center justify-center gap-2">
-                              <span
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: cls.color }}
-                              />
-                              <span
-                                className="text-sm font-medium"
-                                style={{ color: classification === cls.id ? cls.color : '#94a3b8' }}
-                              >
-                                {cls.label}
-                              </span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Narrative Toggle */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-white mb-3">Narrative Section</h3>
-                      <div className="flex gap-2 p-1 bg-surface rounded-xl w-fit">
-                        {[
-                          { id: 'analyst-written', label: 'Analyst-written' },
-                          { id: 'ai-assisted', label: 'AI-assisted' },
-                        ].map(mode => (
-                          <button
-                            key={mode.id}
-                            onClick={() => setNarrativeMode(mode.id)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                              narrativeMode === mode.id
-                                ? 'bg-accent/15 text-accent border border-accent/30'
-                                : 'text-muted hover:text-white'
-                            }`}
-                          >
-                            {mode.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Report Preview */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-white mb-3">Report Preview</h3>
-                      <div className="transform scale-[0.75] origin-top-left w-[133%]">
-                        <ReportPreview
-                          template={selectedTemplate}
-                          classification={classification}
-                          narrativeMode={narrativeMode}
-                        />
-                      </div>
-                    </div>
-
+                  <div className="grid grid-cols-3 gap-3">
+                    {TEMPLATES.map(tpl => (
+                      <button
+                        key={tpl.id}
+                        disabled={tpl.status === 'locked'}
+                        onClick={() => tpl.status === 'active' && setSelectedTemplate(tpl.id)}
+                        className={`relative p-4 rounded-xl border text-left transition-all ${
+                          tpl.status === 'locked'
+                            ? 'opacity-50 cursor-not-allowed bg-surface border-border'
+                            : selectedTemplate === tpl.id
+                              ? 'bg-accent/10 border-accent/50 ring-1 ring-accent/30'
+                              : 'bg-surface border-border hover:border-white/20'
+                        }`}
+                      >
+                        {tpl.status === 'active' && selectedTemplate === tpl.id && (
+                          <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                        {tpl.status === 'locked' && (
+                          <div className="absolute top-3 right-3">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/15 text-warning border border-warning/30 font-semibold">
+                              {tpl.available}
+                            </span>
+                          </div>
+                        )}
+                        <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-3">
+                          <svg className="w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <p className="text-sm font-medium text-white mb-1">{tpl.label}</p>
+                        <p className="text-xs text-muted leading-relaxed">{tpl.desc}</p>
+                      </button>
+                    ))}
                   </div>
-                )}
+                </div>
+
+                {/* Classification */}
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-3">Classification Level</h3>
+                  <div className="flex gap-3">
+                    {CLASSIFICATIONS.map(cls => (
+                      <button
+                        key={cls.id}
+                        onClick={() => setClassification(cls.id)}
+                        className={`flex-1 p-3 rounded-xl border transition-all ${
+                          classification === cls.id
+                            ? 'border-current'
+                            : 'border-border hover:border-white/20'
+                        }`}
+                        style={{
+                          borderColor: classification === cls.id ? cls.color : undefined,
+                          backgroundColor: classification === cls.id ? `${cls.color}15` : undefined,
+                        }}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <span
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: cls.color }}
+                          />
+                          <span
+                            className="text-sm font-medium"
+                            style={{ color: classification === cls.id ? cls.color : '#94a3b8' }}
+                          >
+                            {cls.label}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Narrative Toggle */}
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-3">Narrative Section</h3>
+                  <div className="flex gap-2 p-1 bg-surface rounded-xl w-fit">
+                    {[
+                      { id: 'analyst-written', label: 'Analyst-written' },
+                      { id: 'ai-assisted', label: 'AI-assisted' },
+                    ].map(mode => (
+                      <button
+                        key={mode.id}
+                        onClick={() => setNarrativeMode(mode.id)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          narrativeMode === mode.id
+                            ? 'bg-accent/15 text-accent border border-accent/30'
+                            : 'text-muted hover:text-white'
+                        }`}
+                      >
+                        {mode.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Report Preview */}
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-3">Report Preview</h3>
+                  <div className="transform scale-[0.75] origin-top-left w-[133%]">
+                    <ReportPreview
+                      template={selectedTemplate}
+                      classification={classification}
+                      narrativeMode={narrativeMode}
+                    />
+                  </div>
+                </div>
 
               </div>
             </div>
@@ -998,58 +846,47 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
             {/* Export Footer */}
             <div className="flex items-center justify-between px-6 py-4 border-t border-border flex-shrink-0 bg-surface/50">
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${workflowMode === 'current' ? 'bg-danger' : 'bg-success'}`} />
+                <div className="w-2 h-2 rounded-full bg-success" />
                 <span className="text-xs text-muted">
-                  {workflowMode === 'current'
-                    ? 'Analyst manually assembles this document outside the platform'
-                    : `${INVESTIGATION.findings.length} findings · ${INVESTIGATION.dataSources.length} sources · auto-populated`
-                  }
+                  {INVESTIGATION.findings.length} findings · {INVESTIGATION.dataSources.length} sources · auto-populated
                 </span>
               </div>
-              {workflowMode === 'current' ? (
-                <div className="flex items-center gap-3">
-                  <div className="px-4 py-2.5 rounded-xl text-sm font-medium bg-danger/15 text-danger border border-danger/30">
-                    Platform export unavailable — analysts use Word today ↓
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 relative group">
-                    <button
-                      onClick={() => handleExport('print')}
-                      disabled={isExporting}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-white/5 hover:bg-white/10 text-white border border-border disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                      Print
-                    </button>
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-surface2 border border-border rounded text-[10px] text-muted whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
-                      Hard copy filing and physical records
-                    </div>
-                  </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 relative group">
                   <button
-                    onClick={() => handleExport('pdf')}
+                    onClick={() => handleExport('print')}
                     disabled={isExporting}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-accent hover:bg-accentHover text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-white/5 hover:bg-white/10 text-white border border-border disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   >
-                    {isExporting ? (
-                      <>
-                        <svg className="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Download PDF
-                      </>
-                    )}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                    Print
                   </button>
+                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-surface2 border border-border rounded text-[10px] text-muted whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
+                    Hard copy filing and physical records
+                  </div>
                 </div>
-              )}
+                <button
+                  onClick={() => handleExport('pdf')}
+                  disabled={isExporting}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-accent hover:bg-accentHover text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  {isExporting ? (
+                    <>
+                      <svg className="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Download PDF
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
           </div>
@@ -1059,7 +896,7 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
         </div>
       );
     }
-
+  
     // ─── GENERATE REPORT BUTTON ────────────────────────────────────────────────
     function GenerateReportButton({ onClick }) {
       return (

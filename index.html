@@ -230,24 +230,33 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
 
     // ─── SIDEBAR ───────────────────────────────────────────────────────────────
     const SIDEBAR_ITEMS = [
-      { id: 'discovery', icon: '🗺️', label: 'Map', },
-      { id: 'discovery', icon: '📊', label: 'Timeline', },
-      { id: 'discovery', icon: '🔍', label: 'Findings', },
-      { id: 'reports', icon: '📄', label: 'Reports', badge: '4' },
+      { id: 'map', icon: '🗺️', label: 'Map', group: 'discovery' },
+      { id: 'timeline', icon: '📊', label: 'Timeline', group: 'discovery' },
+      { id: 'findings', icon: '🔍', label: 'Findings', group: 'discovery' },
+      { id: 'reports', icon: '📄', label: 'Reports', badge: '4', group: 'reports' },
     ];
 
-    function Sidebar({ activeView, onViewChange }) {
+    function Sidebar({ activeView, discoveryTab, onViewChange, onDiscoveryTabChange }) {
       return (
         <aside className="w-56 bg-surface border-r border-border flex flex-col">
           <div className="p-4">
             <p className="text-xs uppercase tracking-wider text-muted mb-3">Modules</p>
             <nav className="space-y-1">
               {SIDEBAR_ITEMS.map(item => {
-                const isActive = activeView === item.id;
+                const isActive = item.group === 'reports'
+                  ? activeView === 'reports'
+                  : activeView === 'discovery' && discoveryTab === item.id;
                 return (
                   <button
-                    key={item.id + item.label}
-                    onClick={() => onViewChange(item.id)}
+                    key={item.id}
+                    onClick={() => {
+                      if (item.group === 'reports') {
+                        onViewChange('reports');
+                      } else {
+                        onViewChange('discovery');
+                        onDiscoveryTabChange(item.id);
+                      }
+                    }}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       isActive
                         ? 'bg-accent/15 text-accent border border-accent/30'
@@ -1511,6 +1520,7 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
       const [previewReport, setPreviewReport] = useState(null);
       const [showDownloadSuccess, setShowDownloadSuccess] = useState(false);
       const [downloadReportMeta, setDownloadReportMeta] = useState(null);
+      const [discoveryTab, setDiscoveryTab] = useState('findings');
 
       const handleGenerateReport = () => setIsReportModalOpen(true);
       const handlePreviewReport = (report) => setPreviewReport(report);
@@ -1532,7 +1542,9 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
           <div className="flex flex-1 overflow-hidden">
             <Sidebar
               activeView={activeView}
+              discoveryTab={discoveryTab}
               onViewChange={setActiveView}
+              onDiscoveryTabChange={setDiscoveryTab}
             />
             <main className="flex-1 flex flex-col overflow-hidden">
               {activeView === 'discovery' && <CaseHeader />}

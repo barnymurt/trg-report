@@ -54,12 +54,27 @@
         135deg,
         transparent,
         transparent 40px,
-        rgba(239,68,68,0.06) 40px,
-        rgba(239,68,68,0.06) 80px
+        rgba(239,68,68,0.08) 40px,
+        rgba(239,68,68,0.08) 80px
       );
     }
     .watermark-restricted {
-      border: 2px solid rgba(245,158,11,0.4);
+      background: repeating-linear-gradient(
+        135deg,
+        transparent,
+        transparent 50px,
+        rgba(245,158,11,0.06) 50px,
+        rgba(245,158,11,0.06) 100px
+      );
+    }
+    .watermark-internal {
+      background: repeating-linear-gradient(
+        135deg,
+        transparent,
+        transparent 60px,
+        rgba(100,116,139,0.04) 60px,
+        rgba(100,116,139,0.04) 120px
+      );
     }
     .classification-badge::before {
       content: '';
@@ -117,6 +132,53 @@ The Three Countries Network is assessed with HIGH confidence as the coordinating
 
 Subject Reyes recommends further investigation under directive 7-Alpha and requests authorisation to escalate financial surveillance to Gravity Level 2 access.`;
 
+    const REPORTS_HISTORY = [
+      {
+        id: 'RPT-2026-0342-001',
+        name: 'CASE-2026-0342 — Initial Intelligence Report',
+        classification: 'confidential',
+        status: 'final',
+        analyst: 'Senior Analyst M. Reyes',
+        generated: '10 Feb 2026',
+        caseId: 'CASE-2026-0342',
+        format: 'PDF',
+        agency: 'National Criminal Investigation Bureau',
+      },
+      {
+        id: 'RPT-2026-0342-002',
+        name: 'CASE-2026-0342 — Financial Flow Analysis',
+        classification: 'confidential',
+        status: 'final',
+        analyst: 'Senior Analyst M. Reyes',
+        generated: '3 Mar 2026',
+        caseId: 'CASE-2026-0342',
+        format: 'PDF',
+        agency: 'National Criminal Investigation Bureau',
+      },
+      {
+        id: 'RPT-2026-0342-003',
+        name: 'CASE-2026-0342 — Network Topology Brief',
+        classification: 'restricted',
+        status: 'final',
+        analyst: 'Senior Analyst M. Reyes',
+        generated: '18 Mar 2026',
+        caseId: 'CASE-2026-0342',
+        format: 'Word',
+        agency: 'National Criminal Investigation Bureau',
+      },
+      {
+        id: 'RPT-2026-0342-004',
+        name: 'CASE-2026-0342 — Draft Report v4',
+        classification: 'internal',
+        status: 'draft',
+        analyst: 'Senior Analyst M. Reyes',
+        generated: '28 Mar 2026',
+        caseId: 'CASE-2026-0342',
+        format: 'PDF',
+        agency: 'National Criminal Investigation Bureau',
+      },
+    ];
+
     const TEMPLATES = [
       { id: 'agency-standard', label: 'Agency Standard', desc: 'Standard intelligence report format with agency branding, entity tables, and structured narrative.', status: 'active' },
       { id: 'executive-brief', label: 'Executive Brief', desc: 'Condensed summary for senior stakeholders. 2-page maximum, key findings only.', status: 'locked', available: 'Q3 2026' },
@@ -124,9 +186,9 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
     ];
 
     const CLASSIFICATIONS = [
-      { id: 'confidential', label: 'Confidential', color: '#ef4444', watermark: true },
-      { id: 'restricted',   label: 'Restricted',   color: '#f59e0b', watermark: false },
-      { id: 'internal',     label: 'Internal',    color: '#64748b', watermark: false },
+      { id: 'confidential', label: 'Confidential', color: '#ef4444', watermarkClass: 'watermark-confidential' },
+      { id: 'restricted',   label: 'Restricted',   color: '#f59e0b', watermarkClass: 'watermark-restricted' },
+      { id: 'internal',     label: 'Internal',    color: '#64748b', watermarkClass: 'watermark-internal' },
     ];
 
     // ─── TOP NAV ───────────────────────────────────────────────────────────────
@@ -164,34 +226,43 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
 
     // ─── SIDEBAR ───────────────────────────────────────────────────────────────
     const SIDEBAR_ITEMS = [
-      { icon: '🗺️', label: 'Map', active: false },
-      { icon: '📊', label: 'Timeline', active: false },
-      { icon: '🔍', label: 'Findings', active: true },
-      { icon: '📄', label: 'Reports', active: false },
+      { id: 'discovery', icon: '🗺️', label: 'Map', },
+      { id: 'discovery', icon: '📊', label: 'Timeline', },
+      { id: 'discovery', icon: '🔍', label: 'Findings', },
+      { id: 'reports', icon: '📄', label: 'Reports', badge: '4' },
     ];
 
-    function Sidebar() {
+    function Sidebar({ activeView, onViewChange }) {
       return (
         <aside className="w-56 bg-surface border-r border-border flex flex-col">
           <div className="p-4">
             <p className="text-xs uppercase tracking-wider text-muted mb-3">Modules</p>
             <nav className="space-y-1">
-              {SIDEBAR_ITEMS.map(item => (
-                <button
-                  key={item.label}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                    item.active
-                      ? 'bg-accent/15 text-accent border border-accent/30'
-                      : 'text-textSecondary hover:bg-white/5 hover:text-white'
-                  }`}
-                >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                  {item.active && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />
-                  )}
-                </button>
-              ))}
+              {SIDEBAR_ITEMS.map(item => {
+                const isActive = activeView === item.id;
+                return (
+                  <button
+                    key={item.id + item.label}
+                    onClick={() => onViewChange(item.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      isActive
+                        ? 'bg-accent/15 text-accent border border-accent/30'
+                        : 'text-textSecondary hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                    {item.badge && (
+                      <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-muted">
+                        {item.badge}
+                      </span>
+                    )}
+                    {isActive && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />
+                    )}
+                  </button>
+                );
+              })}
             </nav>
           </div>
           <div className="mt-auto p-4 border-t border-border">
@@ -384,14 +455,10 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
     // ─── REPORT PREVIEW ────────────────────────────────────────────────────────
     function ReportPreview({ template, classification, narrativeMode, showExportModal }) {
       const cls = CLASSIFICATIONS.find(c => c.id === classification);
-      const isConfidential = classification === 'confidential';
-      const isRestricted = classification === 'restricted';
 
       return (
         <div
-          className={`relative bg-white rounded-xl overflow-hidden shadow-2xl transition-all duration-300 ${
-            isConfidential ? 'watermark-confidential' : ''
-          } ${isRestricted ? 'watermark-restricted' : ''}`}
+          className={`relative bg-white rounded-xl overflow-hidden shadow-2xl transition-all duration-300 ${cls.watermarkClass}`}
         >
           {/* Classification badge top-right */}
           <div className="absolute top-3 right-3 z-10">
@@ -924,65 +991,63 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
                   }
                 </span>
               </div>
-              <div className="flex gap-3">
-                {workflowMode === 'current' ? (
-                  <>
-                    <button
-                      disabled
-                      className="px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 text-muted border border-border opacity-50 cursor-not-allowed"
-                    >
-                      Export disabled
-                    </button>
-                    <button
-                      disabled
-                      className="px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 text-muted border border-border opacity-50 cursor-not-allowed"
-                    >
-                      Platform doesn't support this yet
-                    </button>
-                    <div className="px-4 py-2.5 rounded-xl text-sm font-medium bg-danger/15 text-danger border border-danger/30">
-                      This is the problem we're solving ↓
-                    </div>
-                  </>
-                ) : (
-                  <>
+              {workflowMode === 'current' ? (
+                <div className="flex items-center gap-3">
+                  <div className="px-4 py-2.5 rounded-xl text-sm font-medium bg-danger/15 text-danger border border-danger/30">
+                    Platform export unavailable — analysts use Word today ↓
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 relative group">
                     <button
                       onClick={() => handleExport('word')}
                       disabled={isExporting}
-                      className="px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 hover:bg-white/10 text-white border border-border disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-white/5 hover:bg-white/10 text-white border border-border disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                       Word
                     </button>
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-surface2 border border-border rounded text-[10px] text-muted whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
+                      For further editing and collaboration
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 relative group">
                     <button
                       onClick={() => handleExport('print')}
                       disabled={isExporting}
-                      className="px-4 py-2.5 rounded-xl text-sm font-medium bg-white/5 hover:bg-white/10 text-white border border-border disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-white/5 hover:bg-white/10 text-white border border-border disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                       Print
                     </button>
-                    <button
-                      onClick={() => handleExport('pdf')}
-                      disabled={isExporting}
-                      className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-accent hover:bg-accentHover text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                    >
-                      {isExporting ? (
-                        <>
-                          <svg className="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          Download PDF
-                        </>
-                      )}
-                    </button>
-                  </>
-                )}
-              </div>
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-surface2 border border-border rounded text-[10px] text-muted whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
+                      Hard copy filing and physical records
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleExport('pdf')}
+                    disabled={isExporting}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-accent hover:bg-accentHover text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  >
+                    {isExporting ? (
+                      <>
+                        <svg className="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download PDF
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
 
           </div>
@@ -1046,33 +1111,184 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
       );
     }
 
+    // ─── REPORTS HISTORY ─────────────────────────────────────────────────────
+    function ReportsHistory({ onGenerateReport }) {
+      const [filter, setFilter] = useState('all');
+
+      const STATUS_CONFIG = {
+        final: { label: 'Final', color: '#22c55e', bg: 'bg-success/15', text: 'text-success', border: 'border-success/30' },
+        draft: { label: 'Draft', color: '#f59e0b', bg: 'bg-warning/15', text: 'text-warning', border: 'border-warning/30' },
+        archived: { label: 'Archived', color: '#64748b', bg: 'bg-white/5', text: 'text-muted', border: 'border-border' },
+      };
+
+      const FORMAT_ICON = {
+        PDF: (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+        ),
+        Word: (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+        ),
+      };
+
+      const filteredReports = filter === 'all'
+        ? REPORTS_HISTORY
+        : REPORTS_HISTORY.filter(r => r.status === filter);
+
+      return (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Reports Header */}
+          <div className="px-6 py-4 border-b border-border bg-surface/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-white">Report History</h2>
+                <p className="text-xs text-muted mt-0.5">{REPORTS_HISTORY.length} reports generated for this case</p>
+              </div>
+              <button
+                onClick={onGenerateReport}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-accent hover:bg-accentHover text-white transition-all"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                New Report
+              </button>
+            </div>
+
+            {/* Filter tabs */}
+            <div className="flex gap-2 mt-4">
+              {[
+                { id: 'all', label: 'All Reports' },
+                { id: 'final', label: 'Final' },
+                { id: 'draft', label: 'Draft' },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setFilter(tab.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    filter === tab.id
+                      ? 'bg-accent/15 text-accent border border-accent/30'
+                      : 'text-muted hover:text-white border border-transparent hover:border-border'
+                  }`}
+                >
+                  {tab.label}
+                  {tab.id !== 'all' && (
+                    <span className="ml-1.5 text-[10px]">
+                      ({REPORTS_HISTORY.filter(r => r.status === tab.id).length})
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Reports List */}
+          <div className="flex-1 overflow-y-auto scrollbar-thin p-6">
+            <div className="space-y-3">
+              {filteredReports.map(report => {
+                const statusCfg = STATUS_CONFIG[report.status];
+                return (
+                  <div
+                    key={report.id}
+                    className="bg-surface rounded-xl border border-border p-4 hover:border-white/15 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        {/* Format icon */}
+                        <div className="w-9 h-9 rounded-lg bg-white/5 border border-border flex items-center justify-center flex-shrink-0 text-muted group-hover:text-white transition-colors">
+                          {FORMAT_ICON[report.format]}
+                        </div>
+
+                        {/* Report info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-medium text-white group-hover:text-accent transition-colors truncate">{report.name}</p>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide ${statusCfg.bg} ${statusCfg.text} border ${statusCfg.border}`}
+                            >
+                              {statusCfg.label.toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 mt-1.5 text-xs text-muted flex-wrap">
+                            <span>{report.analyst}</span>
+                            <span className="text-white/20">·</span>
+                            <span>{report.generated}</span>
+                            <span className="text-white/20">·</span>
+                            <span
+                              className="text-[10px] font-semibold tracking-wider uppercase"
+                              style={{
+                                color: CLASSIFICATIONS.find(c => c.id === report.classification)?.color,
+                              }}
+                            >
+                              {report.classification}
+                            </span>
+                            <span className="text-white/20">·</span>
+                            <span>{report.format}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-border flex items-center justify-center text-muted hover:text-white transition-all">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </button>
+                        <button className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-border flex items-center justify-center text-muted hover:text-white transition-all">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        </button>
+                        <button className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-border flex items-center justify-center text-muted hover:text-white transition-all">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // ─── MAIN APP ─────────────────────────────────────────────────────────────
     function App() {
       const [isReportModalOpen, setIsReportModalOpen] = useState(false);
       const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+      const [activeView, setActiveView] = useState('discovery'); // 'discovery' | 'reports'
+
+      const handleGenerateReport = () => setIsReportModalOpen(true);
 
       return (
         <div className="h-screen flex flex-col bg-bg text-white overflow-hidden">
           <TopNav />
           <div className="flex flex-1 overflow-hidden">
-            <Sidebar />
+            <Sidebar
+              activeView={activeView}
+              onViewChange={setActiveView}
+            />
             <main className="flex-1 flex flex-col overflow-hidden">
-              <CaseHeader />
+              {activeView === 'discovery' && <CaseHeader />}
               <div className="flex-1 flex overflow-hidden">
-                {/* Left: Map + Summary */}
-                <div className="flex-1 flex flex-col p-6 gap-4 overflow-hidden">
-                  <MapPlaceholder />
-                </div>
-                {/* Right: Findings Panel */}
-                <div className="w-[420px] flex flex-col border-l border-border overflow-hidden">
-                  <FindingsPanel onExport={() => setIsExportModalOpen(true)} />
-                </div>
+                {activeView === 'discovery' ? (
+                  <>
+                    {/* Left: Map + Summary */}
+                    <div className="flex-1 flex flex-col p-6 gap-4 overflow-hidden">
+                      <MapPlaceholder />
+                    </div>
+                    {/* Right: Findings Panel */}
+                    <div className="w-[420px] flex flex-col border-l border-border overflow-hidden">
+                      <FindingsPanel onExport={() => setIsExportModalOpen(true)} />
+                    </div>
+                  </>
+                ) : (
+                  /* Reports History View */
+                  <ReportsHistory onGenerateReport={handleGenerateReport} />
+                )}
               </div>
             </main>
           </div>
 
-          {/* Generate Report CTA */}
-          <GenerateReportButton onClick={() => setIsReportModalOpen(true)} />
+          {/* Generate Report CTA — only in Discovery view */}
+          {activeView === 'discovery' && (
+            <GenerateReportButton onClick={handleGenerateReport} />
+          )}
 
           {/* Modals */}
           <ReportBuilderModal

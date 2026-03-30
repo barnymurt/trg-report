@@ -606,8 +606,8 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
               <p className="text-sm text-slate-700 leading-relaxed">{AI_NARRATIVE}</p>
             ) : (
               <textarea
-                className="w-full h-40 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent placeholder:text-slate-400"
-                placeholder="Add your narrative, analysis, and recommendations here..."
+                className="w-full h-56 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent placeholder:text-slate-400"
+                placeholder="Add your narrative, analysis, and recommendations here — this is the record of your professional judgement and the basis for the findings in this report."
               />
             )}
           </div>
@@ -1002,19 +1002,6 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 relative group">
-                    <button
-                      onClick={() => handleExport('word')}
-                      disabled={isExporting}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-white/5 hover:bg-white/10 text-white border border-border disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                      Word
-                    </button>
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-surface2 border border-border rounded text-[10px] text-muted whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20">
-                      For further editing and collaboration
-                    </div>
-                  </div>
                   <div className="flex items-center gap-1 relative group">
                     <button
                       onClick={() => handleExport('print')}

@@ -520,13 +520,13 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
           {/* Findings Table */}
           <div className="px-6 py-4">
             <h3 className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-3">Findings Summary</h3>
-            <table className="w-full text-sm">
+            <table className="w-full text-sm table-fixed">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16">Type</th>
+                  <th className="text-left py-2 pr-2 text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-14">Type</th>
                   <th className="text-left py-2 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Name / Description</th>
-                  <th className="text-left py-2 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-24">Source</th>
-                  <th className="text-left py-2 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Value</th>
+                  <th className="text-left py-2 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-20">Source</th>
+                  <th className="text-left py-2 text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-28">Value</th>
                 </tr>
               </thead>
               <tbody>
@@ -536,29 +536,19 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
                   return (
                     <tr
                       key={finding.id}
-                      className={`border-b border-slate-100 last:border-0 ${
-                        hasFlag ? 'bg-red-50 border-l-2 border-l-danger' : ''
-                      }`}
+                      className={`border-b border-slate-100 last:border-0 ${hasFlag ? 'bg-red-50 border-l-2 border-l-danger' : ''}`}
                     >
-                      <td className="py-2.5 pr-3">
-                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide ${
-                          hasFlag
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}>
+                      <td className="py-2 pr-2 align-top">
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide whitespace-nowrap ${hasFlag ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
                           {config.abbr}
                         </span>
                       </td>
-                      <td className="py-2.5 pr-3">
-                        <span className="text-slate-800 font-medium">{finding.name}</span>
-                        {finding.meta && (
-                          <span className="ml-2 text-slate-400 text-xs">{finding.meta}</span>
-                        )}
+                      <td className="py-2 pr-3 align-top">
+                        <span className="text-slate-800 font-medium break-words">{finding.name}</span>
+                        {finding.meta && <span className="ml-2 text-slate-400 text-xs whitespace-nowrap">{finding.meta}</span>}
                       </td>
-                      <td className="py-2.5 pr-3 text-slate-500 text-xs">{finding.source}</td>
-                      <td className={`py-2.5 text-xs font-medium ${
-                        hasFlag ? 'text-red-600' : finding.value.includes('HIGH') ? 'text-green-600' : 'text-slate-600'
-                      }`}>
+                      <td className="py-2 pr-3 text-slate-500 text-xs align-top whitespace-nowrap">{finding.source}</td>
+                      <td className={`py-2 text-xs font-medium align-top whitespace-nowrap ${hasFlag ? 'text-red-600' : finding.value.includes('HIGH') ? 'text-green-600' : 'text-slate-600'}`}>
                         {finding.value}
                       </td>
                     </tr>
@@ -1214,13 +1204,13 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
                   {/* Findings Table */}
                   <div className="px-6 py-4">
                     <h3 className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-3">Findings Summary</h3>
-                    <table className="w-full text-sm">
+                    <table className="w-full text-sm table-fixed">
                       <thead>
                         <tr className="border-b border-slate-200">
-                          <th className="text-left py-2 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16">Type</th>
+                          <th className="text-left py-2 pr-2 text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-14">Type</th>
                           <th className="text-left py-2 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Name / Description</th>
-                          <th className="text-left py-2 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-24">Source</th>
-                          <th className="text-left py-2 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Value</th>
+                          <th className="text-left py-2 pr-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-20">Source</th>
+                          <th className="text-left py-2 text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-28">Value</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1229,17 +1219,17 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
                           const hasFlag = finding.flag === 'RED';
                           return (
                             <tr key={finding.id} className={`border-b border-slate-100 last:border-0 ${hasFlag ? 'bg-red-50 border-l-2 border-l-danger' : ''}`}>
-                              <td className="py-2.5 pr-3">
-                                <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide ${hasFlag ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
+                              <td className="py-2 pr-2 align-top">
+                                <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide whitespace-nowrap ${hasFlag ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
                                   {config.abbr}
                                 </span>
                               </td>
-                              <td className="py-2.5 pr-3">
-                                <span className="text-slate-800 font-medium">{finding.name}</span>
-                                {finding.meta && <span className="ml-2 text-slate-400 text-xs">{finding.meta}</span>}
+                              <td className="py-2 pr-3 align-top">
+                                <span className="text-slate-800 font-medium break-words">{finding.name}</span>
+                                {finding.meta && <span className="ml-2 text-slate-400 text-xs whitespace-nowrap">{finding.meta}</span>}
                               </td>
-                              <td className="py-2.5 pr-3 text-slate-500 text-xs">{finding.source}</td>
-                              <td className={`py-2.5 text-xs font-medium ${hasFlag ? 'text-red-600' : finding.value.includes('HIGH') ? 'text-green-600' : 'text-slate-600'}`}>
+                              <td className="py-2 pr-3 text-slate-500 text-xs align-top whitespace-nowrap">{finding.source}</td>
+                              <td className={`py-2 text-xs font-medium align-top whitespace-nowrap ${hasFlag ? 'text-red-600' : finding.value.includes('HIGH') ? 'text-green-600' : 'text-slate-600'}`}>
                                 {finding.value}
                               </td>
                             </tr>
@@ -1331,7 +1321,9 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
 
       const filteredReports = filter === 'all'
         ? REPORTS_HISTORY
-        : REPORTS_HISTORY.filter(r => r.status === filter);
+        : filter === 'saved'
+          ? REPORTS_HISTORY.filter(r => bookmarked[r.id])
+          : REPORTS_HISTORY.filter(r => r.status === filter);
 
       const toggleBookmark = (e, reportId) => {
         e.stopPropagation();
@@ -1376,22 +1368,28 @@ Subject Reyes recommends further investigation under directive 7-Alpha and reque
                 { id: 'all', label: 'All Reports' },
                 { id: 'final', label: 'Final' },
                 { id: 'draft', label: 'Draft' },
+                { id: 'saved', label: 'Saved', icon: '★' },
               ].map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setFilter(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
                     filter === tab.id
                       ? 'bg-accent/15 text-accent border border-accent/30'
                       : 'text-muted hover:text-white border border-transparent hover:border-border'
                   }`}
                 >
+                  {tab.icon && <span className="text-warning text-[10px]">{tab.icon}</span>}
                   {tab.label}
-                  {tab.id !== 'all' && (
+                  {tab.id === 'saved' ? (
+                    <span className="ml-1.5 text-[10px]">
+                      ({Object.values(bookmarked).filter(Boolean).length})
+                    </span>
+                  ) : tab.id !== 'all' ? (
                     <span className="ml-1.5 text-[10px]">
                       ({REPORTS_HISTORY.filter(r => r.status === tab.id).length})
                     </span>
-                  )}
+                  ) : null}
                 </button>
               ))}
             </div>

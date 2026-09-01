@@ -1,0 +1,58 @@
+# Caddyfile — TRG Agent Team
+#
+# Local development: routes all traffic to local services over plain HTTP.
+# Production: when DOMAIN is set, Caddy auto-provisions Let's Encrypt HTTPS.
+#
+# For remote mobile access via Cloudflare Tunnel, the tunnel terminates
+# TLS and forwards plain HTTP to the caddy :80 port.
+
+# ─── Internal services (not exposed publicly) ──────────────────────────
+
+# PWA (Next.js dev server)
+:3000 {
+  reverse_proxy host.docker.internal:3000
+}
+
+# Agent backend (FastAPI)
+:8001 {
+  reverse_proxy agent:8000
+}
+
+# ─── Public entrypoint ─────────────────────────────────────────────────
+
+# Local-only dev
+http://localhost {
+  reverse_proxy agent:8000
+  encode gzip zstd
+}
+
+# Production with domain + auto-TLS
+{$DOMAIN:localhost} {
+  reverse_proxy agent:8000
+  encode gzip zstd
+
+  # Security headers
+  header {
+    # Strict-Transport-Security
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    # Prevent MIME sniffing
+    X-Content-Type-Options "nosniff"
+    # Referrer policy
+    Referrer-Policy "strict-origin-when-cross-origin"
+    # Permissions policy (mobile PWA friendly)
+    Permissions-Policy "microphone=(self), camera=(self), geolocation=()"
+    # Basic XSS protection
+    X-XSS-Protection "1; mode=block"
+  }
+
+  # Rate limiting (per-IP)
+  # Implement via Caddy rate-limit module if needed
+
+  # Logging
+  log {
+    output file /data/caddy_access.log {
+      roll_size 10MB
+      roll_keep 5
+    }
+  }
+}

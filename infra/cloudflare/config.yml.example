@@ -1,0 +1,31 @@
+# Cloudflare Tunnel configuration for TRG Agent Team
+#
+# This file is provided to cloudflared at startup.
+# Replace YOUR-TUNNEL-ID-HERE with the actual tunnel ID after running:
+#   cloudflared tunnel create trg
+# Then place the credentials JSON at /etc/cloudflared/<TUNNEL_ID>.json
+# (or mount via docker volume).
+#
+# The tunnel forwards public traffic to the Caddy reverse proxy on the local
+# host, which then routes to the agent backend.
+
+tunnel: YOUR-TUNNEL-ID-HERE
+credentials-file: /etc/cloudflared/YOUR-TUNNEL-ID-HERE.json
+
+ingress:
+  # Main agent backend (used by the PWA)
+  - hostname: trg.example.com
+    service: http://caddy:80
+    originRequest:
+      noTLSVerify: false
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      keepAliveTimeout: 90s
+      httpHostHeader: trg.example.com
+
+  # Optional: separate hostname for the PWA static assets (Vercel handles this)
+  # - hostname: app.trg.example.com
+  #   service: https://trg-pwa.vercel.app
+
+  # Catch-all — required by cloudflared
+  - service: http_status:404

@@ -1,0 +1,29 @@
+{
+  "name": "trg-agent-team",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-agent Claude system with RAG, voice, and project isolation for a single mobile-first user",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "infra:logs": "docker compose -f infra/docker-compose.yml logs -f",
+    "infra:ps": "docker compose -f infra/docker-compose.yml ps",
+    "backup": "bash infra/scripts/backup.sh",
+    "setup:power": "bash infra/scripts/setup-power.sh"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.0"
+  }
+}

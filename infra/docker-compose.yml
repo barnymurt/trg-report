@@ -1,0 +1,269 @@
+# TRG Agent Team — local infrastructure
+#
+# Runs the heavy local services:
+#   - Qdrant          vector database
+#   - TEI             text embeddings inference (bge-small + bge-m3)
+#   - Reranker        bge-reranker-v2-m3 via TEI rerank endpoint
+#   - Whisper         STT (distil-whisper/distil-large-v3 via faster-whisper)
+#   - Kokoro          TTS (Kokoro-82M)
+#   - SmolLM2         routing / compression LLM (1.7B-Instruct, CPU)
+#   - Docling         document ingest (granite-docling-258M + docling)
+#   - Agent           the smolagents + FastAPI backend
+#   - Caddy           reverse proxy + auto-HTTPS
+#   - Watchdog        restarts unhealthy services
+#
+# Run:    pnpm infra:up
+# Logs:   pnpm infra:logs
+# Stop:   pnpm infra:down
+
+name: trg
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+
+  # ─── Vector database ────────────────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:v1.12.0
+    container_name: trg-qdrant
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "6333:6333"      # REST
+      - "6334:6334"      # gRPC
+    volumes:
+      - ./data/qdrant:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ─── Embeddings (CPU mode — bge-small, fast on CPU) ─────────────────
+  tei-embeddings:
+    image: ghcr.io/huggingface/text-embeddings-inference:1.6
+    container_name: trg-tei-embeddings
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "8080:80"
+    volumes:
+      - ./data/hf-cache:/data
+    command: >
+      --model-id BAAI/bge-small-en-v1.5
+      --revision main
+      --pooling cls
+      --normalize
+      --max-client-batch-size 32
+      --max-batch-tokens 16384
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s   # model download on first start
+
+  # ─── Embeddings — multilingual / long-doc (bge-m3, hybrid) ─────────
+  tei-multilingual:
+    image: ghcr.io/huggingface/text-embeddings-inference:1.6
+    container_name: trg-tei-multilingual
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "8082:80"
+    volumes:
+      - ./data/hf-cache:/data
+    command: >
+      --model-id BAAI/bge-m3
+      --revision main
+      --pooling cls
+      --normalize
+      --max-client-batch-size 8
+      --max-batch-tokens 8192
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  # ─── Reranker ───────────────────────────────────────────────────────
+  tei-reranker:
+    image: ghcr.io/huggingface/text-embeddings-inference:1.6
+    container_name: trg-tei-reranker
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "8081:80"
+    volumes:
+      - ./data/hf-cache:/data
+    command: >
+      --model-id BAAI/bge-reranker-v2-m3
+      --revision main
+      --max-client-batch-size 16
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # ─── Speech-to-text ─────────────────────────────────────────────────
+  whisper:
+    image: ghcr.io/guillaumekln/faster-whisper:latest-cpu
+    container_name: trg-whisper
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "9000:8000"
+    volumes:
+      - ./data/whisper-cache:/root/.cache/huggingface
+    environment:
+      WHISPER_MODEL: distil-whisper/distil-large-v3
+      WHISPER_COMPUTE_TYPE: int8
+      WHISPER_CPU_THREADS: "4"
+    command: >
+      --model distil-whisper/distil-large-v3
+      --compute-type int8
+      --cpu-threads 4
+      --port 8000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s   # model download
+
+  # ─── Text-to-speech ─────────────────────────────────────────────────
+  kokoro:
+    image: ghcr.io/remsky/kokoro-fastapi:latest
+    container_name: trg-kokoro
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "8880:8880"
+    volumes:
+      - ./data/kokoro-cache:/root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8880/v1/audio/voices"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ─── Local routing / compression LLM (SmolLM2-1.7B-Instruct, Q4) ───
+  smollm2:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: trg-smollm2
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "8000:8080"
+    volumes:
+      - ./data/smollm2-cache:/root/.cache/llama.cpp
+      # Pre-download HF GGUF; or use HF_ENDPOINT to fetch on first boot.
+      # We pin a Q4_K_M quantised GGUF mirror.
+    command: >
+      -m HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF
+      --alias smollm2-1.7b-instruct
+      -hf-file smollm2-1.7b-instruct-q4_k_m.gguf
+      -c 4096
+      --host 0.0.0.0
+      --port 8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+
+  # ─── Document ingestion (Docling + Granite-Docling-258M) ────────────
+  docling:
+    build:
+      context: ..
+      dockerfile: infra/docling.Dockerfile
+    container_name: trg-docling
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./data/docling-cache:/root/.cache/huggingface
+      - ./data/documents:/data/documents
+    environment:
+      DOCLING_VLM_MODEL: ibm-granite/granite-docling-258M
+      DOCLING_DEVICE: cpu
+      DOCLING_NUM_THREADS: "4"
+
+  # ─── Agent backend (smolagents + FastAPI) ───────────────────────────
+  agent:
+    build:
+      context: ..
+      dockerfile: apps/agent/Dockerfile
+    container_name: trg-agent
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      tei-embeddings:
+        condition: service_healthy
+      tei-reranker:
+        condition: service_healthy
+      whisper:
+        condition: service_healthy
+      kokoro:
+        condition: service_healthy
+      smollm2:
+        condition: service_healthy
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./data/audit.db:/app/data/audit.db
+      - ./data/documents:/app/data/documents
+      - ./data/agent-config:/app/data/config
+    env_file:
+      - ../.env
+
+  # ─── Reverse proxy (HTTPS termination + local routing) ──────────────
+  caddy:
+    image: caddy:2.8
+    container_name: trg-caddy
+    restart: unless-stopped
+    logging: *default-logging
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./data/caddy_data:/data
+      - ./data/caddy_config:/config
+      - ./cloudflare:/cloudflare:ro
+
+  # ─── Watchdog (restarts unhealthy services, pings external monitor) ─
+  watchdog:
+    image: willfarrell/alpine-wget:latest
+    container_name: trg-watchdog
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      - agent
+      - qdrant
+      - tei-embeddings
+      - whisper
+    command: >
+      sh -c "
+        while true; do
+          wget -qO- http://agent:8000/health || echo AGENT_DOWN;
+          wget -qO- http://qdrant:6333/health || echo QDRANT_DOWN;
+          wget -qO- http://tei-embeddings:80/health || echo TEI_DOWN;
+          wget -qO- http://whisper:8000/ || echo WHISPER_DOWN;
+          sleep 30;
+        done
+      "

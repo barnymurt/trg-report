@@ -1,0 +1,4 @@
+# Cloudflare Pages _redirects — SPA fallback
+
+/setup        /setup        200
+/*            /index.html   200

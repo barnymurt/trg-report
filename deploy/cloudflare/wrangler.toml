@@ -1,0 +1,12 @@
+name = "trg-web"
+compatibility_date = "2024-10-01"
+pages_build_output_dir = "apps/web/.next"
+
+[build]
+  command = "pnpm install --frozen-lockfile && pnpm --filter @trg/web build"
+  # Output is the Next.js standalone output. We need to combine it with
+  # the static directory for _next/static assets.
+
+[vars]
+  NEXT_PUBLIC_API_URL = "https://barnymurt-trg-agent.hf.space"
+  NEXT_PUBLIC_TELEMETRY_DISABLED = "true"

@@ -17,7 +17,7 @@ class TranscriptionResult:
 
 
 class WhisperClient:
-    """faster-whisper HTTP client."""
+    """faster-whisper HTTP client (with demo fallback)."""
 
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
@@ -30,7 +30,12 @@ class WhisperClient:
         language: str = "en",
         filename: str = "audio.webm",
     ) -> TranscriptionResult:
-        """Transcribe an audio blob (webm/opus/wav/mp3)."""
+        if self.settings.trg_demo_mode:
+            return TranscriptionResult(
+                text="(demo) tell me about the kitchen project",
+                language=language,
+                duration_sec=2.0,
+            )
         url = f"{self.settings.whisper_url.rstrip('/')}/v1/audio/transcriptions"
         files = {"file": (filename, audio_bytes, "application/octet-stream")}
         data = {"language": language, "response_format": "json"}

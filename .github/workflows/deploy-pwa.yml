@@ -1,0 +1,50 @@
+# Deploy the PWA to Cloudflare Pages.
+#
+# On push to main, builds the Next.js app and deploys via Wrangler.
+#
+# Required secrets:
+#   CLOUDFLARE_API_TOKEN   — https://dash.cloudflare.com/profile/api-tokens
+#   CLOUDFLARE_ACCOUNT_ID  — found in the Cloudflare dashboard URL
+
+name: deploy PWA to Cloudflare Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/shared/**"
+      - "deploy/cloudflare/**"
+      - ".github/workflows/deploy-pwa.yml"
+
+concurrency:
+  group: pwa-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build Next.js
+        run: pnpm --filter @trg/web build
+        env:
+          NEXT_PUBLIC_API_URL: https://barnymurt-trg-agent.hf.space
+          NEXT_PUBLIC_TELEMETRY_DISABLED: "true"
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: trg-web
+          directory: apps/web/out
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

@@ -4,6 +4,10 @@ A multi-agent Claude system with RAG, voice input/output, and project isolation.
 
 **The pitch in one sentence:** A voice-first, mobile-first PWA that gives a tired-but-sophisticated user a team of Claude-powered agents that can propose actions, cite sources, and respect her final approval — without being another energy drain.
 
+**The deployment:** Hugging Face Spaces (backend + voice + embeddings) + Cloudflare Pages (PWA). One-time $2/mo for HF Pro. See [`DEPLOY.md`](DEPLOY.md).
+
+**Local dev / setup:** See [`infra/SETUP.md`](infra/SETUP.md).
+
 ## Stack at a glance
 
 - **LLM (reasoning):** Claude via Anthropic API — Haiku / Sonnet / Sonnet+extended-thinking, tier auto-selected by task difficulty

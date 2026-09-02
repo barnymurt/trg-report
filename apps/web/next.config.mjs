@@ -2,6 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@trg/shared"],
+  // Static export for Cloudflare Pages. The PWA talks to the agent backend
+  // over the network (NEXT_PUBLIC_API_URL); no server-side rendering needed.
+  output: "export",
+  images: {
+    unoptimized: true,
+  },
   experimental: {
     typedRoutes: true,
   },

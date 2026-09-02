@@ -92,23 +92,42 @@ class LifeCoordinator:
             )
 
         # 2. Retrieve relevant evidence from the project's Qdrant collection
-        chunks = await self.retriever.retrieve(
-            query=user_message,
-            collection=agent.qdrant_collection,
-            project_id=project_id,
-        )
+        chunks: list = []
+        if not self.settings.trg_demo_mode:
+            try:
+                chunks = await self.retriever.retrieve(
+                    query=user_message,
+                    collection=agent.qdrant_collection,
+                    project_id=project_id,
+                )
+            except Exception as e:  # noqa: BLE001
+                # Local services may be down — degrade gracefully
+                import logging
+                logging.getLogger(__name__).warning(
+                    "retrieval failed (services down?): %s", e
+                )
+                chunks = []
 
         # 3. Classify difficulty → pick Claude tier
-        difficulty = await self.smollm2.classify_difficulty(user_message)
+        difficulty = "medium"
+        if not self.settings.trg_demo_mode:
+            try:
+                difficulty = await self.smollm2.classify_difficulty(user_message)
+            except Exception:
+                difficulty = "medium"
         tier = agent.model_tiers.get(difficulty, "haiku")
 
         # 4. Compress retrieved context to fit budget (using SmolLM2 if many chunks)
-        if chunks and len(chunks) >= 3:
-            evidence_text = await self.smollm2.compress(
-                [c.text for c in chunks],
-                target_tokens=self.settings.compression_target_tokens,
-                query=user_message,
-            )
+        evidence_text = ""
+        if chunks and len(chunks) >= 3 and not self.settings.trg_demo_mode:
+            try:
+                evidence_text = await self.smollm2.compress(
+                    [c.text for c in chunks],
+                    target_tokens=self.settings.compression_target_tokens,
+                    query=user_message,
+                )
+            except Exception:
+                evidence_text = "\n\n".join(c.text for c in chunks)
         else:
             evidence_text = "\n\n".join(c.text for c in chunks)
 
@@ -130,7 +149,7 @@ class LifeCoordinator:
             messages.extend(conversation_history)
         messages.append({"role": "user", "content": user_message})
 
-        # 6. Call Claude
+        # 6. Call Claude (or demo stub)
         response_text, call = await self.claude.complete(
             tier=tier,
             system=system_prompt,
@@ -141,14 +160,18 @@ class LifeCoordinator:
             extended_thinking=(tier == "sonnet-thinking"),
         )
 
-        # 7. Faithfulness check
-        faithfulness_score = await self.faithfulness.score(
-            response=response_text,
-            evidence_chunks=[c.text for c in chunks] if chunks else [],
-        )
+        # 7. Faithfulness check (skip in demo mode)
+        faithfulness_score = 1.0
+        if not self.settings.trg_demo_mode:
+            try:
+                faithfulness_score = await self.faithfulness.score(
+                    response=response_text,
+                    evidence_chunks=[c.text for c in chunks] if chunks else [],
+                )
+            except Exception:
+                faithfulness_score = 0.5
 
         # 8. Extract any proposed actions from the response
-        # (We use a simple heuristic — Claude emits a JSON block if it proposes anything.)
         proposed = self._extract_proposed_actions(
             response_text=response_text,
             agent_id=agent.id,

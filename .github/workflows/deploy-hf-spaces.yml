@@ -1,0 +1,100 @@
+# Deploy the three Hugging Face Spaces from this monorepo.
+#
+# Each Space gets its own job. The Space repo is synced from a sub-path
+# of this repo via `huggingface-cli upload` (via the `huggingface/actions`
+# GitHub Action).
+#
+# Triggers:
+#   - Manual via workflow_dispatch (with which space to deploy)
+#   - Automatic on push to main when files under the relevant deploy/ path change
+#
+# Required secrets (set in GitHub repo Settings → Secrets and variables → Actions):
+#   HF_TOKEN — Hugging Face write token (https://huggingface.co/settings/tokens)
+
+name: deploy to Hugging Face Spaces
+
+on:
+  workflow_dispatch:
+    inputs:
+      space:
+        description: "Which Space to deploy"
+        required: true
+        type: choice
+        options:
+          - all
+          - trg-agent
+          - trg-voice
+          - trg-embeddings
+  push:
+    branches: [main]
+    paths:
+      - "deploy/hf_spaces/**"
+      - "apps/agent/**"
+      - ".github/workflows/deploy-hf-spaces.yml"
+
+concurrency:
+  group: hf-deploy-${{ github.event.inputs.space || 'all' }}
+  cancel-in-progress: false
+
+jobs:
+  trg-agent:
+    if: ${{ github.event.inputs.space == 'all' || github.event.inputs.space == 'trg-agent' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Sync to HF Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # The Space repo is barnymurt/trg-agent (config in deploy/hf_spaces/trg-agent/README.md).
+          # We push the contents of the relevant subdir plus apps/agent/src.
+          mkdir -p /tmp/space
+          cp -r deploy/hf_spaces/trg-agent/* /tmp/space/
+          cp -r apps/agent/src /tmp/space/src
+          cp apps/agent/pyproject.toml /tmp/space/pyproject.toml 2>/dev/null || true
+          cd /tmp/space
+          # The Dockerfile expects apps/agent/src and pyproject.toml relative paths.
+          # We rewrite the COPY paths to be relative to the Space root.
+          sed -i 's|COPY apps/agent/pyproject.toml ./|COPY pyproject.toml ./|g' Dockerfile
+          sed -i 's|COPY apps/agent/src/ ./src/|COPY src/ ./src/|g' Dockerfile
+          pip install -q huggingface_hub
+          huggingface-cli login --token $HF_TOKEN
+          huggingface-cli upload --repo-type space --private barnymurt/trg-agent . .
+
+  trg-voice:
+    if: ${{ github.event.inputs.space == 'all' || github.event.inputs.space == 'trg-voice' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync to HF Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          mkdir -p /tmp/space
+          cp -r deploy/hf_spaces/trg-voice/* /tmp/space/
+          cd /tmp/space
+          # The Dockerfile expects deploy/hf_spaces/trg-voice/server.py and start.sh.
+          # Rewrite COPY paths.
+          sed -i 's|COPY deploy/hf_spaces/trg-voice/server.py|COPY server.py|g' Dockerfile
+          sed -i 's|COPY deploy/hf_spaces/trg-voice/start.sh|COPY start.sh|g' Dockerfile
+          pip install -q huggingface_hub
+          huggingface-cli login --token $HF_TOKEN
+          huggingface-cli upload --repo-type space --public barnymurt/trg-voice . .
+
+  trg-embeddings:
+    if: ${{ github.event.inputs.space == 'all' || github.event.inputs.space == 'trg-embeddings' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync to HF Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          mkdir -p /tmp/space
+          cp -r deploy/hf_spaces/trg-embeddings/* /tmp/space/
+          cd /tmp/space
+          pip install -q huggingface_hub
+          huggingface-cli login --token $HF_TOKEN
+          huggingface-cli upload --repo-type space --public barnymurt/trg-embeddings . .

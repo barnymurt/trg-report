@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     anthropic_model_sonnet_thinking: str = "claude-3-5-sonnet-latest"
     anthropic_beta: str = "prompt-caching-2024-07-31"
 
+    # ─── Demo mode ────────────────────────────────────────────────────
+    # When trg_demo_mode is true, the Claude client returns canned
+    # responses instead of calling the API. Useful for UI development
+    # without burning credits, and for showcasing the system end-to-end
+    # when no API key is configured.
+    trg_demo_mode: bool = False
+
     # ─── Local services ───────────────────────────────────────────────
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str = ""

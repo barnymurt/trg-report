@@ -1,12 +1,12 @@
-# TRG Agent — Hugging Face Space
+# TRG Agent — Hugging Face Space (single all-in-one container)
 #
-# This Space runs the full agent backend: FastAPI + Qdrant + SmolLM2.
-# It calls out to:
-#   - Anthropic API for Claude (reasoning LLM)
-#   - HF Inference Endpoints / TEI on the companion `trg-embeddings` Space
-#   - HF Inference Endpoints / faster-whisper on the companion `trg-voice` Space
+# Runs FastAPI + Qdrant + serves the PWA static export.
+# Companion Spaces:
+#   - barnymurt/trg-voice       (Whisper + Kokoro)
+#   - barnymurt/trg-embeddings  (TEI bge-small)
 #
-# Private Space (requires HF Pro); persistent storage on HF Hub Datasets.
+# Single URL: https://barnymurt-trg-agent.hf.space serves both the API
+# (/chat, /actions/execute, etc.) and the PWA at /.
 
 FROM python:3.12-slim
 
@@ -37,18 +37,9 @@ RUN arch=$(uname -m) && \
     chmod +x /usr/local/bin/qdrant && \
     rm /tmp/qdrant.tgz
 
-# Install llama.cpp (for SmolLM2 server, single-binary alternative to llama-cpp-python)
-RUN mkdir -p /opt/llama.cpp && \
-    cd /opt/llama.cpp && \
-    curl -sLo llama.cpp.tar.gz https://github.com/ggerganov/llama.cpp/archive/refs/tags/b3848.tar.gz && \
-    tar -xzf llama.cpp.tar.gz --strip-components=1 && \
-    rm llama.cpp.tar.gz && \
-    (cmake -B build && cmake --build build --config Release --target llama-server -j$(nproc) || true)
-
 WORKDIR /app
 
-# Install Python deps (use the project pyproject)
-COPY apps/agent/pyproject.toml ./
+# Install Python deps
 RUN pip install --upgrade pip && \
     pip install \
       "smolagents>=1.10.0" "litellm>=1.51.0" "fastapi>=0.115.0" "uvicorn[standard]>=0.32.0" \
@@ -59,21 +50,22 @@ RUN pip install --upgrade pip && \
       "structlog>=24.4.0" "pyyaml>=6.0"
 
 # Copy source
-COPY apps/agent/src/ ./src/
-COPY README.md ./
+COPY src/ ./src/
+COPY pyproject.toml ./
+
+# Copy the prebuilt PWA static export
+COPY web/ ./web/
 
 ENV PYTHONPATH=/app/src
 
-# Qdrant storage lives here (persisted via HF Spaces persistent storage at /data)
+# Hugging Face Space persistent storage
 ENV QDRANT_STORAGE=/data/qdrant
 ENV AUDIT_DB_PATH=/data/audit.db
 ENV DOCUMENT_STORE_PATH=/data/documents
 
-# Hugging Face Space port
 EXPOSE 7860
 
-# Start script: Qdrant in background → wait for health → llama-server (optional) → uvicorn
-COPY deploy/hf_spaces/trg-agent/start.sh /start.sh
+COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
 CMD ["/start.sh"]

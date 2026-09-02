@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Start the TRG agent Space: Qdrant + (optional) llama.cpp + FastAPI.
+# Start the TRG agent Space: Qdrant + FastAPI + serves the PWA.
 #
-# Hugging Face Spaces expects a single port (7860 by default). We expose
-# only the FastAPI; Qdrant runs internally on 6333 and is reached via the
-# agent's QDRANT_URL=http://localhost:6333.
+# Hugging Face Spaces expects a single port (7860 by default). Qdrant runs
+# internally on 6333 and is reached via QDRANT_URL=http://localhost:6333.
+# The PWA static export is mounted at /app/web and served by FastAPI at /.
 
 set -euo pipefail
 
@@ -16,7 +16,6 @@ qdrant --storage-snapshots-dir /data/qdrant/snapshots \
        --disable-telemetry > /data/qdrant.log 2>&1 &
 QDRANT_PID=$!
 
-# Wait for Qdrant to be healthy
 for i in {1..30}; do
   if curl -sf http://localhost:6333/health >/dev/null 2>&1; then
     echo "[start] qdrant healthy"
@@ -25,14 +24,14 @@ for i in {1..30}; do
   sleep 1
 done
 
-# ─── FastAPI agent ──────────────────────────────────────────────────────
+# ─── FastAPI agent (serves API + PWA) ───────────────────────────────────
 export QDRANT_URL="${QDRANT_URL:-http://localhost:6333}"
 export TEI_URL="${TEI_URL:-https://barnymurt-trg-embeddings.hf.space}"
-export RERANKER_URL="${RERANKER_URL:-https://barnymurt-trg-embeddings.hf.space}"
 export WHISPER_URL="${WHISPER_URL:-https://barnymurt-trg-voice.hf.space}"
 export KOKORO_URL="${KOKORO_URL:-https://barnymurt-trg-voice.hf.space}"
-export SMOLLM2_URL="${SMOLLM2_URL:-http://localhost:8000}"
+export SMOLLM2_URL="${SMOLLM2_URL:-}"
 export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
+export PWA_STATIC_DIR="${PWA_STATIC_DIR:-/app/web}"
 
-# HF Spaces exposes port 7860
+# uvicorn picks up the route we register in main.py to serve /app/web at /
 exec uvicorn trg.main:app --host 0.0.0.0 --port 7860 --workers 1 --proxy-headers

@@ -51,7 +51,11 @@ REPO_DIR="${TRG_DIR:-$HOME/trg}"
 step "Preflight"
 [ "$(id -u)" -eq 0 ] && die "Run as the unprivileged user (ubuntu or opc). The script uses sudo when needed."
 command -v curl >/dev/null || die "curl required"
-command -v git  >/dev/null || die "git required"
+# git is optional — only used for `git pull` updates. The bootstrap tarball
+# download path (used on tiny VMs that can't install git) doesn't need it.
+if ! command -v git >/dev/null 2>&1; then
+  warn "git not installed — updates will require downloading a fresh tarball"
+fi
 
 # Detect OS
 . /etc/os-release 2>/dev/null || die "Could not detect OS from /etc/os-release"

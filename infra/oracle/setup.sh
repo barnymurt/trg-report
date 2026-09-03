@@ -183,12 +183,18 @@ if [ -n "$DOCKER_BIN" ] && ! $DOCKER_BIN compose version >/dev/null 2>&1; then
   ok "compose plugin installed"
 fi
 
-# Allow current user to run docker without sudo
+# Allow current user to run docker without sudo.
+# On the static-Docker install path, the `docker` group may not exist.
+# Tolerate that — we just keep using `sudo docker` for the rest of the run.
 if ! groups | grep -q docker; then
-  sudo usermod -aG docker "$USER"
-  warn "added $USER to docker group — log out and back in (or run: newgrp docker)"
-  warn "Re-run this script after re-login."
-  exit 0
+  if sudo usermod -aG docker "$USER" 2>/dev/null; then
+    warn "added $USER to docker group — log out and back in (or run: newgrp docker)"
+    warn "Re-run this script after re-login."
+    exit 0
+  else
+    warn "could not add $USER to docker group (group may not exist on static Docker installs)"
+    warn "using 'sudo docker' for the rest of this run — fine for one-off setups"
+  fi
 fi
 
 # ─── Clone the repo ────────────────────────────────────────────────────

@@ -103,14 +103,75 @@ install_docker_rhel() {
   sudo systemctl enable --now docker
 }
 
+install_docker_static() {
+  # Used on memory-constrained VMs (E2.1.Micro, 498 MB) where dnf OOMs.
+  # Downloads a precompiled tarball from docker.com — no package manager.
+  local ver="${DOCKER_STATIC_VERSION:-27.3.1}"
+  local arch
+  arch="$(uname -m)"
+  case "$arch" in
+    x86_64)  darch="x86_64" ;;
+    aarch64) darch="aarch64" ;;
+    *) die "unsupported arch for static docker: $arch" ;;
+  esac
+  local url="https://download.docker.com/linux/static/stable/${darch}/docker-${ver}.tgz"
+  step "Downloading static Docker ${ver} (${darch})"
+  curl -sLo /tmp/docker.tgz "$url"
+  sudo tar -xzf /tmp/docker.tgz -C /usr/local/bin --strip-components=1 docker/docker docker/dockerd docker/docker-init docker/containerd docker/containerd-shim* docker/runc docker/ctr
+  rm /tmp/docker.tgz
+
+  # Set up the systemd unit
+  sudo tee /etc/systemd/system/docker.service >/dev/null <<'EOF'
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+After=network-online.target firewalld.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/dockerd -H unix:///var/run/docker.sock --data-root /var/lib/docker
+ExecReload=/bin/kill -s HUP $MAINPID
+TimeoutSec=0
+RestartSec=2
+Restart=always
+StartLimitBurst=3
+StartLimitInterval=60s
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+Delegate=yes
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now docker
+  ok "docker installed (static, v${ver})"
+}
+
 if ! command -v docker >/dev/null 2>&1; then
+  # On tiny VMs dnf install OOMs. Try static first if RAM < 1.5 GB.
+  if [ "$TOTAL_RAM_GB" -lt 1 ] && command -v curl >/dev/null 2>&1; then
+    install_docker_static
+  else
+    case "$OS_FAMILY" in
+      debian) install_docker_debian ;;
+      rhel)   install_docker_rhel   ;;
+    esac
+    ok "docker installed ($(docker --version))"
+  fi
+elif docker compose version >/dev/null 2>&1; then
+  ok "docker + compose already installed ($(docker --version))"
+else
+  # docker is present but compose plugin is missing — try to add the plugin
   case "$OS_FAMILY" in
     debian) install_docker_debian ;;
     rhel)   install_docker_rhel   ;;
   esac
-  ok "docker installed ($(docker --version))"
-else
-  ok "docker already installed ($(docker --version))"
+  ok "docker compose plugin added ($(docker --version))"
 fi
 
 # Allow current user to run docker without sudo

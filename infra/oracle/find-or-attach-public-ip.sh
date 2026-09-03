@@ -21,15 +21,18 @@ die()  { printf "  \033[0;31m✗\033[0m %s\n" "$1"; exit 1; }
 # ─── Preflight ─────────────────────────────────────────────────────────
 command -v oci >/dev/null 2>&1 || die "oci CLI not found in Cloud Shell — are you sure you're in Cloud Shell? (top right >_ icon)"
 
-COMPARTMENT_ID=$(oci iam compartment list --query 'data[0].id' --raw-output)
-[ -n "$COMPARTMENT_ID" ] || die "Could not determine your root compartment. Run: oci iam compartment list"
+# Use the tenancy OCID as the compartment for queries. In Cloud Shell with
+# InstancePrincipal auth, this works for the resources your user can see.
+# If a more specific compartment env var is set, use that.
+COMPARTMENT_ID="${OCI_COMPARTMENT:-$OCI_TENANCY}"
+[ -n "$COMPARTMENT_ID" ] || die "Could not determine tenancy/compartment. Set OCI_COMPARTMENT=<ocid> and re-run."
 ok "compartment: $COMPARTMENT_ID"
 
 # ─── Step 1: list all instances ────────────────────────────────────────
-step "Instances in your root compartment:"
+step "Instances in your tenancy:"
 oci compute instance list \
   --compartment-id "$COMPARTMENT_ID" \
-  --query 'data[].{name:"display-name",id:id,shape:shape,state:"lifecycle-state",public_ip:"public-ip",ocpu:"shape-config".ocpus,memory_gb:"shape-config"."memory-in-gbs"}' \
+  --query 'data[].{"display-name":"display-name",id:id,shape:shape,state:"lifecycle-state","public-ip":"public-ip",ocpu:"shape-config".ocpus,memory_gb:"shape-config"."memory-in-gbs"}' \
   --output table
 
 # ─── Step 2: ask which one ─────────────────────────────────────────────
@@ -47,7 +50,7 @@ fi
 INSTANCE_OCID=$(oci compute instance list \
   --compartment-id "$COMPARTMENT_ID" \
   --query "data[?\"display-name\"=='$INSTANCE_NAME'].id | [0]" \
-  --raw-output)
+  --raw-output 2>/dev/null)
 
 [ -n "$INSTANCE_OCID" ] || die "No instance found with name '$INSTANCE_NAME'"
 

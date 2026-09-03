@@ -22,6 +22,23 @@ warn() { printf "  \033[1;33m⚠\033[0m %s\n" "$1"; }
 step "Welcome — this will set up your TRG agent in ~5-10 minutes"
 printf "  Running as: %s on %s\n" "$(whoami)" "$(uname -srm)"
 
+# ─── Swap (1 GB VMs OOM during dnf) ─────────────────────────────────────
+if [ -f /proc/meminfo ]; then
+  TOTAL_MEM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+  SWAP_MB=$(awk '/SwapTotal/ {print int($2/1024)}' /proc/meminfo)
+  if [ "$TOTAL_MEM_MB" -le 1500 ] && [ "$SWAP_MB" -lt 1024 ]; then
+    step "Adding 2 GB swap (this VM has ${TOTAL_MEM_MB} MB RAM; dnf will OOM without swap)"
+    sudo fallocate -l 2G /swapfile 2>/dev/null || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+    sudo chmod 600 /swapfile
+    sudo mkswap /swapfile
+    sudo swapon /swapfile
+    grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
+    ok "swap added (now $(awk '/SwapTotal/ {print int($2/1024)}' /proc/meminfo) MB)"
+  else
+    ok "RAM/swap sufficient (${TOTAL_MEM_MB} MB RAM, ${SWAP_MB} MB swap)"
+  fi
+fi
+
 # ─── Git ────────────────────────────────────────────────────────────────
 if ! command -v git >/dev/null 2>&1; then
   step "Installing git"

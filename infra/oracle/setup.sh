@@ -152,26 +152,35 @@ EOF
   ok "docker installed (static, v${ver})"
 }
 
-if ! command -v docker >/dev/null 2>&1; then
-  # On tiny VMs dnf install OOMs. Try static first if RAM < 1.5 GB.
-  if [ "$TOTAL_RAM_GB" -lt 1 ] && command -v curl >/dev/null 2>&1; then
-    install_docker_static
-  else
-    case "$OS_FAMILY" in
-      debian) install_docker_debian ;;
-      rhel)   install_docker_rhel   ;;
-    esac
-    ok "docker installed ($(docker --version))"
-  fi
-elif docker compose version >/dev/null 2>&1; then
-  ok "docker + compose already installed ($(docker --version))"
+# Check for docker in standard locations (PATH may not include /usr/local/bin
+# when running under sudo, so don't rely on `command -v` alone)
+DOCKER_BIN=""
+for candidate in /usr/local/bin/docker /usr/bin/docker /snap/bin/docker; do
+  [ -x "$candidate" ] && DOCKER_BIN="$candidate" && break
+done
+[ -z "$DOCKER_BIN" ] && command -v docker >/dev/null 2>&1 && DOCKER_BIN="$(command -v docker)"
+
+if [ -n "$DOCKER_BIN" ]; then
+  ok "docker found at $DOCKER_BIN ($($DOCKER_BIN --version 2>&1 | head -1))"
+elif [ "$TOTAL_RAM_GB" -lt 1 ] && command -v curl >/dev/null 2>&1; then
+  install_docker_static
 else
-  # docker is present but compose plugin is missing — try to add the plugin
   case "$OS_FAMILY" in
     debian) install_docker_debian ;;
     rhel)   install_docker_rhel   ;;
   esac
-  ok "docker compose plugin added ($(docker --version))"
+  ok "docker installed"
+fi
+
+# Make sure the compose plugin exists (or fall back to a static binary)
+if [ -n "$DOCKER_BIN" ] && ! $DOCKER_BIN compose version >/dev/null 2>&1; then
+  step "Installing docker compose plugin (static)"
+  COMPOSE_URL="https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"
+  curl -sLo /tmp/docker-compose "$COMPOSE_URL"
+  sudo mkdir -p /usr/local/libexec/docker/cli-plugins
+  sudo install -m 0755 /tmp/docker-compose /usr/local/libexec/docker/cli-plugins/docker-compose
+  rm /tmp/docker-compose
+  ok "compose plugin installed"
 fi
 
 # Allow current user to run docker without sudo
